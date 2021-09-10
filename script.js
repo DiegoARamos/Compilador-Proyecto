@@ -1,13 +1,12 @@
-let pscode, conditions, errorList, lines, conditionPile;
+let pscode, errorList, currentLine, conditionStack;
 const arcode = document.createElement("textarea");
 
 function compile() {
-    errorList = [];
-    lines = 1;
-    conditions = [];
-    conditionPile = [];
-    arcode.value = "";
-    pscode = document.getElementById("code").value;
+    errorList = [];     //Lista de errores
+    currentLine = 1;    //Línea actual
+    conditionStack = [];    //Pila de condicionales
+    arcode.value = "";      //Código de Arduino
+    pscode = document.getElementById("code").value;     //Pseudocódigo
     
 
     pscode = pscode.split(/\r?\n/);
@@ -21,6 +20,10 @@ function compile() {
         switch (pscode[i])
         {
             case "Inicio":
+                if (i!=0)
+                {
+                    errorHandler(14, i);
+                }
                 break;
             case "Fin":
                 break;
@@ -29,7 +32,7 @@ function compile() {
             case " ":
                 break;
             case "~":
-                lines++
+                currentLine++
                 break;
             case "Mover":
                 if (pscode[i+1]=="Adelante" || pscode[i+1]=="Atrás" && pscode[i-1]=="~")
@@ -146,7 +149,7 @@ function compile() {
                 }
                 break;
             case "Color":
-                if (pscode[i+1]=="Rojo" || pscode[i+1]=="Azul" || pscode[i+1]=="Amarillo" || pscode[i+1]=="Verde" || pscode[i+1]=="Naranja" || pscode[i+1]=="Morado" || pscode[i+1]=="Blanco" || pscode[i+1]=="Aleatorio" || pscode[i+1]=="Apagar" && pscode[i-1]=="~")
+                if (pscode[i+1]=="Rojo" || pscode[i+1]=="Azul" || pscode[i+1]=="Amarillo" || pscode[i+1]=="Verde" || pscode[i+1]=="Naranja" || pscode[i+1]=="Morado" || pscode[i+1]=="Blanco" || pscode[i+1]=="Aleatorio" || pscode[i+1]=="Negro" && pscode[i-1]=="~")
                 {
                     arcode.value = arcode.value + "RGB_"
                 } else
@@ -415,7 +418,7 @@ function compile() {
                 if (pscode[i-1]=="~" && (pscode[i+1]=="distancia" || !isNaN(pscode[i+1])) && (pscode[i+2]=="=" || pscode[i+2]==">" || pscode[i+2]=="<" || pscode[i+2]=="=<" || pscode[i+2]=="<=") && (pscode[i+3]=="distancia" || !isNaN(pscode[i+3])) && pscode[i+4]=="entonces")
                 {
                     arcode.value = arcode.value + "if ("
-                    conditionPile[conditionPile.length] = "FinSi";
+                    conditionStack[conditionStack.length] = "FinSi";
                 } else
                 {
                     if (pscode[i-1] != "~")
@@ -508,7 +511,7 @@ function compile() {
                 if (pscode[i-1]=="~" && (pscode[i+1]=="distancia" || !isNaN(pscode[i+1])) && (pscode[i+2]=="=" || pscode[i+2]==">" || pscode[i+2]=="<" || pscode[i+2]=="=<" || pscode[i+2]=="<=") && (pscode[i+3]=="distancia" || !isNaN(pscode[i+3])) && pscode[i+4]=="hacer")
                 {
                     arcode.value = arcode.value + "while ("
-                    conditionPile[conditionPile.length] = "FinMientras";
+                    conditionStack[conditionStack.length] = "FinMientras";
                 } else
                 {
                     if (pscode[i-1] != "~")
@@ -547,7 +550,7 @@ function compile() {
                 if ((pscode[i+1]=="infinitas" || !isNaN(pscode[i+1])) && pscode[i-1]=="~")
                 {
                     arcode.value = arcode.value + "for ("
-                    conditionPile[conditionPile.length] = "FinRepetir";
+                    conditionStack[conditionStack.length] = "FinRepetir";
                 } else
                 {
                     if (pscode[i-1] != "~")
@@ -592,13 +595,13 @@ function compile() {
                 }
                 break;
             case "FinRepetir":
-                if (conditionPile[conditionPile.length-1]=="FinRepetir")
+                if (conditionStack[conditionStack.length-1]=="FinRepetir")
                 {
                     arcode.value = arcode.value + "}\n"
-                    conditionPile.pop();
+                    conditionStack.pop();
                 } else
                 {
-                    if (conditionPile.length>0)
+                    if (conditionStack.length>0)
                     {
                         errorHandler(11, i);
                     } else
@@ -608,13 +611,13 @@ function compile() {
                 }
                 break;
             case "FinSi":
-                if (conditionPile[conditionPile.length-1]=="FinSi")
+                if (conditionStack[conditionStack.length-1]=="FinSi")
                 {
                     arcode.value = arcode.value + "}\n"
-                    conditionPile.pop();
+                    conditionStack.pop();
                 } else
                 {
-                    if (conditionPile.length>0)
+                    if (conditionStack.length>0)
                     {
                         errorHandler(11, i);
                     } else
@@ -624,13 +627,13 @@ function compile() {
                 }
                 break;
             case "FinMientras":
-                if (conditionPile[conditionPile.length-1]=="FinMientras")
+                if (conditionStack[conditionStack.length-1]=="FinMientras")
                 {
                     arcode.value = arcode.value + "}\n"
-                    conditionPile.pop();
+                    conditionStack.pop();
                 } else
                 {
-                    if (conditionPile.length>0)
+                    if (conditionStack.length>0)
                     {
                         errorHandler(11, i);
                     } else
@@ -658,10 +661,10 @@ function compile() {
         }
     }
 
-    if (conditionPile.length>0)
+    if (conditionStack.length>0)
     {
-        for (let i=0; i<conditionPile.length; i++) {
-            errorList[errorList.length] = "Faltó el cierre de condicional '"+conditionPile[conditionPile.length-1]+"'";
+        for (let i=0; i<conditionStack.length; i++) {
+            errorList[errorList.length] = "Faltó el cierre de condicional '"+conditionStack[conditionStack.length-1]+"'";
         }    
     }
 
@@ -691,7 +694,7 @@ function compile() {
         document.getElementById("errorsBox").innerHTML = "<h5 class='errorsText'>"+errorList+"</h5>";
     }
 
-    console.log(conditionPile.length);
+    console.log(conditionStack.length);
 }
 
 
@@ -701,43 +704,49 @@ function errorHandler(type, currentSpace)
     switch (type)
     {
         case 1:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": Se esperaba un salto de línea antes de la palabra '"+pscode[currentSpace]+"'";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": Se esperaba un salto de línea antes de la palabra '"+pscode[currentSpace]+"'";
             break;
         case 2:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": La palabra '"+pscode[currentSpace+1]+"' no es un parámetro válido para la función '"+pscode[currentSpace]+"'";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": La palabra '"+pscode[currentSpace+1]+"' no es un parámetro válido para la función '"+pscode[currentSpace]+"'";
             break;
         case 3:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": No se esperaba un salto de línea después de la palabra '"+pscode[currentSpace]+"'";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": No se esperaba un salto de línea después de la palabra '"+pscode[currentSpace]+"'";
             break;
         case 4:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": Se esperaba un salto de línea después de la palabra '"+pscode[currentSpace]+"'";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": Se esperaba un salto de línea después de la palabra '"+pscode[currentSpace]+"'";
             break;
         case 5:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": La palabra '"+pscode[currentSpace-1]+"' no es una función compatible con el parámetro '"+pscode[currentSpace]+"'";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": La palabra '"+pscode[currentSpace-1]+"' no es una función compatible con el parámetro '"+pscode[currentSpace]+"'";
             break;
         case 6:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": No se esperaba un salto de línea antes de la palabra '"+pscode[currentSpace]+"'";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": No se esperaba un salto de línea antes de la palabra '"+pscode[currentSpace]+"'";
             break;
         case 7:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": La palabra '"+pscode[currentSpace]+"' es desconocida para el lenguaje";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": La palabra '"+pscode[currentSpace]+"' es desconocida para el lenguaje";
             break;
         case 8:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": La estructura del condicional 'Si' está incompleta o mal escrita";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": La estructura del condicional 'Si' está incompleta o mal escrita";
             break;
         case 9:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": La estructura del bucle '"+pscode[currentSpace]+"' está incompleta o mal escrita";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": La estructura del bucle '"+pscode[currentSpace]+"' está incompleta o mal escrita";
             break;
         case 10:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": Uso incorrecto de la expresión '"+pscode[currentSpace]+"'";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": Uso incorrecto de la expresión '"+pscode[currentSpace]+"'";
             break;
         case 11:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": Se esperaba el cierre de condicional '"+conditionPile[conditionPile.length-1]+"'";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": Se esperaba el cierre de condicional '"+conditionStack[conditionStack.length-1]+"'";
             break;
         case 12:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": No hay ningún condicional que cerrar";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": No hay ningún condicional que cerrar";
             break;
         case 13:
-            errorList[errorList.length] = "Se ha detectado un error en la línea "+lines+": No se esperaba un número";
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": No se esperaba un número";
+            break;
+        case 14:
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": La palabra 'Inicio' solo debe estar al iniciar el código";
+            break;
+        case 15:
+            errorList[errorList.length] = "Se ha detectado un error en la línea "+currentLine+": La palabra 'Fin' solo debe estar al acabar el código";
             break;
         default:
             break;
