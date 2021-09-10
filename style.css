@@ -1,47 +1,67 @@
-body
-{
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
     background-color: rgb(29, 62, 90);
 }
 
-.title
-{
+header{
+    background-color: rgb(18, 38, 56);
+    padding: 0.5em 0;
     color: rgb(250, 250, 250);
-    margin-left: 45%;
+    text-align: center;
+    margin: 0;
 }
 
-.code
-{
-    margin-left: 30%;
-    margin-bottom: 100px;
+.code-container{
+    margin-top: 2%;
+    width: 100%;
+    height: 100%;
+}
 
+.container{
+    width: 95%;
+    margin-left: 2.5%;
+    margin-right: 2.5%;
+    height: 70vh;
+    text-align: center;
+}
+
+.text-area
+{
+    width: 90%;
+    height: 100%;
+    border-radius: 6px;
     background-color: rgb(230, 230, 230);
 }
 
-.footer
+footer
 {
-    background-color: rgb(4, 30, 48);
+    background-color: rgb(18, 38, 56);
     width: 100%;
-    height: 100px;
+    height: 15%;
 
     position: fixed;
     right: 0;
     bottom: 0;
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .compile
 {
     background-color: rgb(210, 210, 210);
     width: 15%;
-    height: 70px;
+    height: 70%;
     border-radius: 15px;
-
-    margin-top: 15px;
-    margin-left: 15px;
-
     text-align: center;
-    padding-top: 0.1px;
-
-    float: left;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .compile:hover
@@ -52,17 +72,14 @@ body
 
 .compileText{
     color: rgb(20,20,20);
+    font-size: 3vw;
 }
 
 .errorsBox{
-    width: 63%;
+    width: 70%;
     height: 80%;
     background-color: rgb(210, 210, 210);
-    float: left;
-    margin-top: 10px;
-    margin-left: 2%;
     overflow: auto;
-    padding-left: 2%;
 }
 
 .errorsText{
@@ -71,11 +88,14 @@ body
 }
 
 .logo{
-    background-image: url(https://i.ibb.co/swzbRNb/LogoPNG.png);
-    background-size: contain;
-    margin-left: 2%;
     height: 90%;
-    margin-top: 5px;
-    width: 106.6px;
-    float: left;
+    width: 10%;
+    display: flexbox;
+    align-items: center;
+}
+
+.logo .image {
+    background: url(https://i.ibb.co/swzbRNb/LogoPNG.png) no-repeat center center;
+    background-size: contain;
+    height: 100%;
 }
